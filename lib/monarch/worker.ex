@@ -9,27 +9,18 @@ defmodule Monarch.Worker do
       keys: [:job, :repo]
     ]
 
-  @base_delay 5
-  @max_load_attempts 5
-
   @impl Oban.Worker
-  def perform(job) do
-    worker = String.to_atom(job.args["job"])
-    repo = String.to_atom(job.args["repo"])
-    attempt = Map.get(job.args, "load_attempt", 1)
+  def perform(%Oban.Job{args: %{"job" => job_name, "repo" => repo_name}} = job) do
+    worker = String.to_atom(job_name)
+    repo = String.to_atom(repo_name)
 
-    case ensure_worker_loaded(worker, attempt) do
-      :ok ->
-        perform_worker_job(clean_job, worker, repo)
+    case Code.ensure_loaded(worker) do
+      {:module, ^worker} ->
+        perform_worker_job(job, worker, repo)
 
-      {:retry, next_attempt, delay} ->
-        # Update job args with next attempt number for the retry
-        updated_job = %{job | args: Map.put(job.args, "load_attempt", next_attempt)}
-        {:snooze, delay}
-
-      {:error, reason} ->
-        # Max retries exceeded or permanent failure
-        {:discard, "Failed to load worker module #{worker}: #{inspect(reason)}"}
+      {:error, _reason} ->
+        # Let Oban handle the retry backoff automatically
+        {:error, "Module #{job_name} not loaded"}
     end
   end
 
@@ -103,33 +94,5 @@ defmodule Monarch.Worker do
     else
       {:ok, lambda.()}
     end
-  end
-
-  defp ensure_worker_loaded(worker, attempt) when attempt <= @max_load_attempts do
-    case Code.ensure_loaded(worker) do
-      {:module, ^worker} ->
-        :ok
-
-      {:error, :nofile} ->
-        # Module doesn't exist - this can be caused by a race condition where
-        # the module is not yet compiled but the job has been enqueued and picked
-        # up. We will retry with an exponential backoff up to max attempts.
-        delay = calculate_delay(attempt)
-        {:retry, attempt + 1, delay}
-
-      {:error, _reason} ->
-        # Module exists but failed to load - retry with backoff
-        delay = calculate_delay(attempt)
-        {:retry, attempt + 1, delay}
-    end
-  end
-
-  defp ensure_worker_loaded(_worker, attempt) when attempt > @max_load_attempts do
-    {:error, :max_retries_exceeded}
-  end
-
-  defp calculate_delay(attempt) do
-    # Exponential backoff: 5s, 10s, 20s, 40s, 80s
-    @base_delay * :math.pow(2, attempt - 1) |> round()
   end
 end

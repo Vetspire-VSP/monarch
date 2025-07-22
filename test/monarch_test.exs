@@ -302,4 +302,20 @@ defmodule MonarchTest do
                |> length()
     end
   end
+
+  test "returns an error when module not loaded" do
+    job_args = %{
+      "job" => "Elixir.MonarchNonExistentJob",
+      "repo" => "Elixir.Monarch.Repo"
+    }
+
+    result =
+      Monarch.Worker.perform(%Oban.Job{
+        args: job_args,
+        worker: "Monarch.Worker",
+        attempt: 1
+      })
+
+    assert result == {:error, "Module Elixir.MonarchNonExistentJob not loaded"}
+  end
 end
