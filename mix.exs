@@ -11,9 +11,9 @@ defmodule Monarch.MixProject do
       elixirc_paths: ["lib/", "test/"],
       deps: deps(),
       docs: [main: "Monarch"],
-      source_url: "https://github.com/vetspire/monarch",
-      homepage_url: "https://github.com/vetspire/monarch",
-      package: [licenses: ["MIT"], links: %{"GitHub" => "https://github.com/vetspire/monarch"}],
+      source_url: "https://github.com/Vetspire-VSP/monarch",
+      homepage_url: "https://github.com/Vetspire-VSP/monarch",
+      package: [licenses: ["MIT"], links: %{"GitHub" => "https://github.com/Vetspire-VSP/monarch"}],
       description: "Simple framework for defining and running data migrations and backfills.",
       dialyzer: [plt_add_apps: [:mix, :ex_unit]]
     ]
