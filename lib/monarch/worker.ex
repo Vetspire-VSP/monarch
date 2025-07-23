@@ -10,10 +10,21 @@ defmodule Monarch.Worker do
     ]
 
   @impl Oban.Worker
-  def perform(job) do
-    worker = String.to_atom(job.args["job"])
-    repo = String.to_atom(job.args["repo"])
+  def perform(%Oban.Job{args: %{"job" => job_name, "repo" => repo_name}} = job) do
+    worker = String.to_atom(job_name)
+    repo = String.to_atom(repo_name)
 
+    case Code.ensure_loaded(worker) do
+      {:module, ^worker} ->
+        perform_worker_job(job, worker, repo)
+
+      {:error, _reason} ->
+        # Let Oban handle the retry backoff automatically
+        {:error, "Module #{job_name} not loaded"}
+    end
+  end
+
+  defp perform_worker_job(job, worker, repo) do
     {:ok, {action, resp}} =
       cond do
         worker.skip() ->
