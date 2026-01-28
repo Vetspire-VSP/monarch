@@ -21,7 +21,7 @@ if Mix.env() == :test do
 
   defmodule MonarchTestSkipJob do
     @moduledoc """
-    A module that always skips
+    A module that always skips.
     """
 
     @behaviour Monarch
@@ -41,7 +41,7 @@ if Mix.env() == :test do
 
   defmodule MonarchTestSnoozeJob do
     @moduledoc """
-    A module that always snoozes
+    A module that always snoozes.
     """
 
     @behaviour Monarch
@@ -64,7 +64,7 @@ if Mix.env() == :test do
 
   defmodule MonarchTestCycleJob do
     @moduledoc """
-    A module that will never finish
+    A module that will never finish.
     """
 
     @behaviour Monarch
@@ -248,6 +248,47 @@ if Mix.env() == :test do
     import Ecto.Query
 
     alias Monarch.Repo
+
+    @impl Monarch
+    def skip, do: false
+
+    @impl Monarch
+    def scheduled_at, do: Timex.beginning_of_day(DateTime.utc_now())
+
+    @impl Monarch
+    def query do
+      Repo.all(
+        from(job in "monarch_jobs",
+          where: job.name == "Elixir.AFakeJob",
+          select: %{id: job.id, name: job.name, inserted_at: job.inserted_at}
+        )
+      )
+    end
+
+    @impl Monarch
+    def update(_) do
+      Repo.delete_all(
+        from(job in "monarch_jobs",
+          where: job.name == "Elixir.AFakeJob",
+          select: %{id: job.id, name: job.name, inserted_at: job.inserted_at}
+        )
+      )
+    end
+  end
+
+  defmodule MonarchTestCustomQueueJob do
+    @moduledoc """
+    A module that implements a monarch job that specifies a custom Oban queue.
+    """
+
+    @behaviour Monarch
+
+    import Ecto.Query
+
+    alias Monarch.Repo
+
+    @impl Monarch
+    def queue, do: "custom_queue"
 
     @impl Monarch
     def skip, do: false

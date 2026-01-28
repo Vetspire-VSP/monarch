@@ -96,7 +96,7 @@ defmodule MonarchTest do
                  oban_job.args["job"] == "Elixir.MonarchTestSnoozeJob"
                end)
 
-      assert 8 = length(queued_jobs)
+      assert 9 = length(queued_jobs)
     end
 
     test "will not queue a job that has already been completed" do
@@ -109,7 +109,7 @@ defmodule MonarchTest do
 
       Monarch.run(Monarch.Oban, "test")
 
-      assert 7 = length(all_enqueued(worker: Monarch.Worker))
+      assert 8 = length(all_enqueued(worker: Monarch.Worker))
       refute_enqueued(worker: MonarchTestAlreadyCompletedJob)
     end
 
@@ -124,7 +124,7 @@ defmodule MonarchTest do
 
       Monarch.run(Monarch.Oban, "test")
 
-      assert 8 = length(all_enqueued(worker: Monarch.Worker))
+      assert 9 = length(all_enqueued(worker: Monarch.Worker))
       refute_enqueued(worker: MonarchTestManualJob)
     end
 
@@ -145,8 +145,8 @@ defmodule MonarchTest do
 
         Monarch.run(Monarch.Oban, "test")
 
-        # Instead of 8, there should only be 7 jobs enqueued, because the `MonarchTestEmptyJob` job is already running
-        assert 7 = length(all_enqueued(worker: Monarch.Worker))
+        # Instead of 9, there should only be 8 jobs enqueued, because the `MonarchTestEmptyJob` job is already running
+        assert 8 = length(all_enqueued(worker: Monarch.Worker))
       end
     end
 
@@ -168,8 +168,26 @@ defmodule MonarchTest do
         Monarch.run(Monarch.Oban, "test")
 
         # All jobs are re-enqueued
-        assert 8 = length(all_enqueued(worker: Monarch.Worker))
+        assert 9 = length(all_enqueued(worker: Monarch.Worker))
       end
+    end
+
+    test "enqueues jobs to custom queue when specified" do
+      Monarch.run(Monarch.Oban, "test")
+
+      assert %Oban.Job{
+               args: %{
+                 "job" => "Elixir.MonarchTestCustomQueueJob",
+                 "repo" => "Elixir.Monarch.Repo"
+               },
+               worker: "Monarch.Worker",
+               queue: "custom_queue"
+             } =
+               [worker: Monarch.Worker]
+               |> all_enqueued()
+               |> Enum.find(fn oban_job ->
+                 oban_job.args["job"] == "Elixir.MonarchTestCustomQueueJob"
+               end)
     end
   end
 
