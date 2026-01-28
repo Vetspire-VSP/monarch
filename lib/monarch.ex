@@ -70,6 +70,11 @@ defmodule Monarch do
   """
   @callback snooze? :: nil | false | integer()
 
+  @doc """
+  Specifies which Oban queue the job should be enqueued to.
+
+  If not implemented, the job will use the default queue passed to `Monarch.run/2`.
+  """
   @callback queue :: String.t()
 
   @optional_callbacks transaction?: 0, snooze?: 0, queue: 0
