@@ -47,10 +47,11 @@ Then, there are 4 functions that should be generated that you need for our Monar
 - `query/0` - Should return the list of records that need to be updated.
 - `update/1` - Takes the list of records from `query/0` and performs the given update.
 
-There are currently two optional callbacks:
+There are currently three optional callbacks:
 
 - `snooze?/0` - If this function is implemented, and returns an integer, the job will be rescheduled to run again in that many seconds. This is useful if you want to run a job again after a certain amount of time has passed. Does nothing if falsey or unimplemented.
 - `transaction?/0` - Controls whether or not the job should be run in a transaction. If this function is implemented and returns true, the job will be run in a transaction. If falsey or unimplemented, the job will not be run in a transaction.
+- `queue/0` - Specifies which Oban queue the job should be enqueued to. If this function is implemented and returns a string, the job will be inserted into that queue. If unimplemented, the job will use the default queue passed to `Monarch.run/2`.
 
 Monarch will keep running until `query/0` returns no remaining records to be updated, after which it will record a completed job in the `monarch_jobs` table.
 
