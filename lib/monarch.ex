@@ -70,13 +70,20 @@ defmodule Monarch do
   """
   @callback snooze? :: nil | false | integer()
 
-  @optional_callbacks transaction?: 0, snooze?: 0
+  @doc """
+  Specifies which Oban queue the job should be enqueued to.
+
+  If not implemented, the job will use the default queue passed to `Monarch.run/2`.
+  """
+  @callback queue :: String.t()
+
+  @optional_callbacks transaction?: 0, snooze?: 0, queue: 0
 
   @doc """
   Queues up all pending jobs waiting to be run that have the Monarch behaviour implemented.
   """
   @spec run(oban :: module(), String.t()) :: :ok
-  def run(oban, queue) do
+  def run(oban, default_queue) do
     is_implemented = fn module ->
       __MODULE__ in List.wrap(module.module_info(:attributes)[:behaviour])
     end
@@ -96,6 +103,8 @@ defmodule Monarch do
           not is_nil(job.scheduled_at()),
           not completed?(repo, job),
           not running?(repo, job) do
+        queue = (function_exported?(job, :queue, 0) && job.queue()) || default_queue
+
         Oban.insert(
           oban,
           Worker.new(%{job: job, repo: repo}, queue: queue, scheduled_at: job.scheduled_at())
