@@ -4,8 +4,8 @@ defmodule Monarch.MixProject do
   def project do
     [
       app: :monarch,
-      version: "0.3.0",
-      elixir: "~> 1.18.1",
+      version: "0.3.1",
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       elixirc_paths: ["lib/", "test/"],
