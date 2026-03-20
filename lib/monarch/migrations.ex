@@ -7,7 +7,8 @@ defmodule Monarch.Migrations do
 
   @spec up(Keyword.t()) :: :ok
   def up(version: 1) do
-    create table(:monarch_jobs) do
+    create table(:monarch_jobs, primary_key: false) do
+      add(:id, :bigserial, primary_key: true)
       add(:name, :string, null: false)
       add(:inserted_at, :utc_datetime, null: false)
     end
